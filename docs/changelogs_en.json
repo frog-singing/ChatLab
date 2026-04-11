@@ -1,5 +1,38 @@
 [
   {
+    "version": "0.17.0",
+    "date": "2026-04-12",
+    "summary": "This release strengthens WhatsApp import parsing and specified-format imports, while refreshing Overview cards and adding sharing, screenshots, and debugging utilities.",
+    "changes": [
+      {
+        "type": "feat",
+        "items": [
+          "Add a flexible WhatsApp V2 timestamp parser that adapts to export variants across regions.",
+          "Improve WhatsApp chat log detection.",
+          "Add specified-format import support.",
+          "Add a sharing card in the Messages tab.",
+          "Add quick debugging tools in DEBUG mode.",
+          "Improve the Overview identity card and unify time-range query logic.",
+          "Refactor Overview module cards and extract a theme color card with reserved palette modes.",
+          "Unify maximum card width and elevate Home tools into a global tools sidebar.",
+          "Add screenshot support for theme cards and disable mobile screenshot adaptation by default.",
+          "Remove diagnostic suggestions and add new prompts."
+        ]
+      },
+      {
+        "type": "fix",
+        "items": [
+          "Fix inconsistency between WhatsApp time-parsing regex rules and line-matching regex rules.",
+          "Fix compatibility issues when parsing WhatsApp 12-hour time formats and NNBSP characters."
+        ]
+      },
+      {
+        "type": "chore",
+        "items": ["Cache electron and electron-builder binaries to speed up CI packaging."]
+      }
+    ]
+  },
+  {
     "version": "0.16.0",
     "date": "2026-04-10",
     "summary": "This update adds a new initiative analysis view for private chats and fixes missing custom models in the model-edit dialog.",
