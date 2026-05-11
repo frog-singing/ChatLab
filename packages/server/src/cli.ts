@@ -198,6 +198,15 @@ program
     dbManager.closeAll()
   })
 
+// chatlab mcp - MCP Server
+program
+  .command('mcp')
+  .description('启动 MCP Server（stdio 传输，供 Claude Desktop / Cursor 等 AI 代理使用）')
+  .action(async () => {
+    const { startMcpServer } = await import('./mcp')
+    await startMcpServer()
+  })
+
 // chatlab config - 配置管理
 const configCmd = program.command('config').description('配置管理')
 
