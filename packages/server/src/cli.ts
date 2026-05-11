@@ -209,6 +209,51 @@ program
     await startMcpServer()
   })
 
+// chatlab serve - 启动 HTTP API 服务
+program
+  .command('serve')
+  .description('启动独立 HTTP API 服务')
+  .option('--port <port>', '服务端口', '3210')
+  .option('--host <host>', '监听地址', '127.0.0.1')
+  .option('--token <token>', '自定义 Bearer Token（不指定则从配置文件读取或自动生成）')
+  .action(async (options) => {
+    const { startHttpServer } = await import('./http')
+    const port = parseInt(options.port, 10)
+
+    try {
+      const info = await startHttpServer({
+        port,
+        host: options.host,
+        token: options.token || undefined,
+      })
+
+      console.log(`\nChatLab HTTP API 已启动`)
+      console.log(`  地址: http://${info.host}:${info.port}`)
+      console.log(`  Token: ${info.token}`)
+      console.log(`\n示例:`)
+      console.log(`  curl -H "Authorization: Bearer ${info.token}" http://${info.host}:${info.port}/api/v1/status`)
+      console.log(`\n按 Ctrl+C 停止服务\n`)
+
+      const shutdown = async () => {
+        console.log('\n正在停止服务...')
+        const { stopHttpServer } = await import('./http')
+        await stopHttpServer()
+        process.exit(0)
+      }
+
+      process.on('SIGINT', shutdown)
+      process.on('SIGTERM', shutdown)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      if (message.includes('EADDRINUSE')) {
+        console.error(`错误: 端口 ${port} 已被占用`)
+      } else {
+        console.error(`启动失败: ${message}`)
+      }
+      process.exit(1)
+    }
+  })
+
 // chatlab config - 配置管理
 const configCmd = program.command('config').description('配置管理')
 
