@@ -187,11 +187,32 @@ async function installAiApiShims(): Promise<void> {
     getProviders: () => get('/ai/llm/providers'),
     getProviderRegistry: () => get('/ai/llm/provider-registry'),
     getModelCatalog: () => get('/ai/llm/model-catalog'),
-    setDefaultAssistantModel: () => Promise.resolve(WEB_STUB),
-    setFastModel: () => Promise.resolve(WEB_STUB),
-    deleteConfig: () => Promise.resolve(WEB_STUB),
-    addConfig: () => Promise.resolve(WEB_STUB),
-    updateConfig: () => Promise.resolve(WEB_STUB),
+    setDefaultAssistantModel: async (configId: string, modelId: string) => {
+      const { put: httpPut } = await import('./utils/http')
+      _cachedLlmData = null
+      return httpPut('/ai/llm/default-assistant-slot', { configId, modelId })
+    },
+    setFastModel: async (slot: { configId: string; modelId: string } | null) => {
+      const { put: httpPut } = await import('./utils/http')
+      _cachedLlmData = null
+      return httpPut('/ai/llm/fast-model-slot', slot)
+    },
+    deleteConfig: async (id?: string) => {
+      if (!id) return WEB_STUB
+      const { del } = await import('./utils/http')
+      _cachedLlmData = null
+      return del(`/ai/llm/configs/${id}`)
+    },
+    addConfig: async (config: Record<string, unknown>) => {
+      const { post: httpPost } = await import('./utils/http')
+      _cachedLlmData = null
+      return httpPost('/ai/llm/configs', config)
+    },
+    updateConfig: async (id: string, updates: Record<string, unknown>) => {
+      const { put: httpPut } = await import('./utils/http')
+      _cachedLlmData = null
+      return httpPut(`/ai/llm/configs/${id}`, updates)
+    },
     validateApiKey: () => Promise.resolve(WEB_STUB),
     fetchRemoteModels: () => Promise.resolve({ success: false, error: 'Not available in web mode', models: [] }),
     chatStream: () => Promise.resolve({ success: false, error: 'Not available in web mode' }),

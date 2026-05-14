@@ -20,6 +20,13 @@ import { TOOL_REGISTRY } from '@openchatlab/tools'
 import { adaptToolsForAgent } from '../../ai/tool-adapter'
 import { loadAssistantConfig } from '../../ai/assistant-loader'
 import { runServerAgent, type AgentStreamEvent } from '../../ai/agent'
+import {
+  addLlmConfig,
+  updateLlmConfig,
+  deleteLlmConfig,
+  setDefaultAssistantSlot,
+  setFastModelSlot,
+} from '../../ai/llm-config'
 
 function getAiDir(dbManager: DatabaseManager): string {
   const pathProvider = (dbManager as any)['pathProvider']
@@ -231,6 +238,58 @@ export function registerAiRoutes(
     } catch {
       return null
     }
+  })
+
+  // ==================== LLM Config Write Operations ====================
+
+  server.post<{
+    Body: {
+      name: string
+      provider: string
+      apiKey: string
+      model?: string
+      baseUrl?: string
+      maxTokens?: number
+      apiFormat?: string
+    }
+  }>('/_web/ai/llm/configs', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return addLlmConfig(aiDataDir, request.body)
+  })
+
+  server.put<{
+    Params: { id: string }
+    Body: {
+      name?: string
+      provider?: string
+      apiKey?: string
+      model?: string
+      baseUrl?: string
+      maxTokens?: number
+      apiFormat?: string
+    }
+  }>('/_web/ai/llm/configs/:id', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return updateLlmConfig(aiDataDir, request.params.id, request.body)
+  })
+
+  server.delete<{ Params: { id: string } }>('/_web/ai/llm/configs/:id', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return deleteLlmConfig(aiDataDir, request.params.id)
+  })
+
+  server.put<{
+    Body: { configId: string; modelId: string }
+  }>('/_web/ai/llm/default-assistant-slot', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return setDefaultAssistantSlot(aiDataDir, request.body.configId, request.body.modelId)
+  })
+
+  server.put<{
+    Body: { configId: string; modelId: string } | null
+  }>('/_web/ai/llm/fast-model-slot', async (request) => {
+    const aiDataDir = getAiDir(dbManager)
+    return setFastModelSlot(aiDataDir, request.body)
   })
 
   // ==================== Tool Catalog ====================
