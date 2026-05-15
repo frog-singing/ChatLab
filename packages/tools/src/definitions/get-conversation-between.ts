@@ -52,7 +52,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const getConversationBetweenTool: ToolDefinition = {
-  name: 'chatlab_get_conversation_between',
+  name: 'get_conversation_between',
   description: '获取两个群成员之间的对话记录。适用于回答"A和B之间聊了什么"等问题。需要先通过 get_members 获取成员 ID。',
   inputSchema,
   handler,

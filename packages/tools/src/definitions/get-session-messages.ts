@@ -51,7 +51,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const getSessionMessagesTool: ToolDefinition = {
-  name: 'chatlab_get_session_messages',
+  name: 'get_session_messages',
   description: '获取指定会话的完整消息列表。用于在 search_sessions 找到相关会话后，获取该会话的完整上下文。',
   inputSchema,
   handler,

@@ -63,7 +63,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const searchSessionsTool: ToolDefinition = {
-  name: 'chatlab_search_sessions',
+  name: 'search_sessions',
   description:
     '搜索聊天会话（对话段落）。会话是根据消息时间间隔自动切分的对话单元。返回匹配的会话列表及每个会话的前5条消息预览。',
   inputSchema,

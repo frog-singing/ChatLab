@@ -42,7 +42,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const getMessageContextTool: ToolDefinition = {
-  name: 'chatlab_get_message_context',
+  name: 'get_message_context',
   description: '根据消息 ID 获取前后的上下文消息。适用于需要查看某条消息前后聊天内容的场景。',
   inputSchema,
   handler,

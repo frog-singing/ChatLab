@@ -74,7 +74,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const keywordFrequencyTool: ToolDefinition = {
-  name: 'chatlab_keyword_frequency',
+  name: 'keyword_frequency',
   description: '统计群聊中的高频关键词，通过 NLP 分词分析消息内容。',
   inputSchema,
   handler,

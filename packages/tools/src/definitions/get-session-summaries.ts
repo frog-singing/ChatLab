@@ -70,7 +70,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const getSessionSummariesTool: ToolDefinition = {
-  name: 'chatlab_get_session_summaries',
+  name: 'get_session_summaries',
   description: '获取会话摘要列表，快速了解群聊历史讨论的主题。可以按关键词搜索讨论过的话题。',
   inputSchema,
   handler,

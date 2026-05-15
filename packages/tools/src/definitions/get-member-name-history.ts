@@ -56,7 +56,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const getMemberNameHistoryTool: ToolDefinition = {
-  name: 'chatlab_get_member_name_history',
+  name: 'get_member_name_history',
   description: '获取成员的昵称变更历史记录。适用于回答"某人以前叫什么名字"、"某人的昵称变化"等问题。',
   inputSchema,
   handler,

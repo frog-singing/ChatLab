@@ -49,7 +49,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const getMembersTool: ToolDefinition = {
-  name: 'chatlab_get_members',
+  name: 'get_members',
   description: '获取成员列表，包括成员的基本信息、别名和消息统计。适用于查询"有哪些人"、"某人的别名是什么"等问题。',
   inputSchema,
   handler,

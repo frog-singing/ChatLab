@@ -47,7 +47,7 @@ function handler(_params: Record<string, unknown>, context: SessionListContext):
 }
 
 export const sessionsListTool: ToolDefinition = {
-  name: 'chatlab_sessions',
+  name: 'list_sessions',
   description: '列出所有可用的聊天会话，返回会话名称、平台、消息数等基本信息',
   inputSchema,
   handler: handler as ToolDefinition['handler'],

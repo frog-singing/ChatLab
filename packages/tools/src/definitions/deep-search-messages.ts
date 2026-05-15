@@ -54,7 +54,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const deepSearchMessagesTool: ToolDefinition = {
-  name: 'chatlab_deep_search_messages',
+  name: 'deep_search_messages',
   description:
     '深度搜索消息（LIKE 子串匹配，速度较慢但不会遗漏），适用于全文搜索精确匹配或 FTS 搜索无结果时的补充搜索。',
   inputSchema,

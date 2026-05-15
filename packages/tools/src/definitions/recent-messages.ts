@@ -43,7 +43,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const recentMessagesTool: ToolDefinition = {
-  name: 'chatlab_recent_messages',
+  name: 'get_recent_messages',
   description: '获取指定时间段内的群聊消息。适用于回答"最近大家聊了什么"等概览性问题。支持精确到分钟级别的时间查询。',
   inputSchema,
   handler,

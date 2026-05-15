@@ -37,7 +37,7 @@ function handler(params: Record<string, unknown>, context: ToolExecutionContext)
 }
 
 export const sessionInfoTool: ToolDefinition = {
-  name: 'chatlab_session_info',
+  name: 'get_session_info',
   description: '获取当前会话的详细信息，包括名称、平台、消息总数、成员数、时间范围等',
   inputSchema,
   handler,

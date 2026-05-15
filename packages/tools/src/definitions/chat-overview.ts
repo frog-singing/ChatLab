@@ -50,7 +50,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const chatOverviewTool: ToolDefinition = {
-  name: 'chatlab_chat_overview',
+  name: 'get_chat_overview',
   description: '获取聊天概览信息，包括聊天名称、平台、总消息数、总成员数、时间范围和活跃成员排行',
   inputSchema,
   handler,

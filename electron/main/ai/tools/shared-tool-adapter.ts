@@ -13,7 +13,6 @@ import { WorkerDataProvider } from './worker-data-provider'
 import { t as i18nT } from '../../i18n'
 
 interface AdaptOptions {
-  electronName: string
   category: ToolCategory
   truncationStrategy?: 'keep_first' | 'keep_last'
 }
@@ -37,7 +36,7 @@ function buildExecutionContext(ctx: ToolContext): ToolExecutionContext {
 
 export function adaptSharedTool(tool: ToolDefinition, options: AdaptOptions): ToolRegistryEntry {
   return {
-    name: options.electronName,
+    name: tool.name,
     category: options.category,
     truncationStrategy: options.truncationStrategy ?? tool.truncationStrategy,
     factory(context: ToolContext): AgentTool<any> {
@@ -48,9 +47,9 @@ export function adaptSharedTool(tool: ToolDefinition, options: AdaptOptions): To
       }
 
       return {
-        name: options.electronName,
-        label: options.electronName,
-        description: `ai.tools.${options.electronName}.desc`,
+        name: tool.name,
+        label: tool.name,
+        description: `ai.tools.${tool.name}.desc`,
         parameters: schema as any,
         async execute(_toolCallId: string, params: Record<string, unknown>): Promise<AgentToolResult<unknown>> {
           const execCtx = buildExecutionContext(context)

@@ -47,14 +47,14 @@ async function schemaHandler(_params: Record<string, unknown>, context: ToolExec
 }
 
 export const sqlQueryTool: ToolDefinition = {
-  name: 'chatlab_sql',
-  description: '对聊天数据库执行只读 SELECT 查询。使用前可先调用 chatlab_schema 查看表结构。',
+  name: 'execute_sql',
+  description: '对聊天数据库执行只读 SELECT 查询。使用前可先调用 get_schema 查看表结构。',
   inputSchema,
   handler,
 }
 
 export const schemaTool: ToolDefinition = {
-  name: 'chatlab_schema',
+  name: 'get_schema',
   description: '查看聊天数据库的表结构（所有表的 CREATE TABLE 语句）',
   inputSchema: schemaInputSchema,
   handler: schemaHandler,

@@ -103,7 +103,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const responseTimeAnalysisTool: ToolDefinition = {
-  name: 'chatlab_response_time_analysis',
+  name: 'response_time_analysis',
   description: '分析群成员的响应速度排行，基于回复间隔的中位数和平均值。',
   inputSchema,
   handler,

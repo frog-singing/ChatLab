@@ -37,7 +37,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const memberStatsTool: ToolDefinition = {
-  name: 'chatlab_member_stats',
+  name: 'get_member_stats',
   description: '获取成员活跃度排行，包括消息数量和占比',
   inputSchema,
   handler,

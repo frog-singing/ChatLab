@@ -54,7 +54,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const searchMessagesTool: ToolDefinition = {
-  name: 'chatlab_search_messages',
+  name: 'search_messages',
   description:
     '根据关键词搜索群聊记录。适用于用户想要查找特定话题、关键词相关的聊天内容。可以指定时间范围和发送者来筛选消息。',
   inputSchema,

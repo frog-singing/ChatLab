@@ -33,54 +33,30 @@ import { adaptSharedTool } from '../shared-tool-adapter'
 const sqlToolDefinitions = SQL_TOOL_DEFS.map(createSqlToolDefinition)
 
 export const sqlToolEntries: ToolRegistryEntry[] = sqlToolDefinitions.map((t) =>
-  adaptSharedTool(t, { electronName: t.name, category: 'analysis' })
+  adaptSharedTool(t, { category: 'analysis' })
 )
 
 export const SQL_TOOL_NAMES = SQL_TOOL_DEFS.map((d) => d.name)
 
 export const TOOL_REGISTRY: ToolRegistryEntry[] = [
   // ==================== Core 工具（始终加载） ====================
-  adaptSharedTool(chatOverviewTool, { electronName: 'get_chat_overview', category: 'core' }),
-  adaptSharedTool(searchMessagesTool, {
-    electronName: 'search_messages',
-    category: 'core',
-    truncationStrategy: 'keep_first',
-  }),
-  adaptSharedTool(deepSearchMessagesTool, {
-    electronName: 'deep_search_messages',
-    category: 'core',
-    truncationStrategy: 'keep_first',
-  }),
-  adaptSharedTool(recentMessagesTool, {
-    electronName: 'get_recent_messages',
-    category: 'core',
-    truncationStrategy: 'keep_last',
-  }),
-  adaptSharedTool(getMessageContextTool, {
-    electronName: 'get_message_context',
-    category: 'core',
-    truncationStrategy: 'keep_last',
-  }),
-  adaptSharedTool(searchSessionsTool, { electronName: 'search_sessions', category: 'core' }),
-  adaptSharedTool(getSessionMessagesTool, {
-    electronName: 'get_session_messages',
-    category: 'core',
-    truncationStrategy: 'keep_last',
-  }),
-  adaptSharedTool(getMembersTool, { electronName: 'get_members', category: 'core' }),
+  adaptSharedTool(chatOverviewTool, { category: 'core' }),
+  adaptSharedTool(searchMessagesTool, { category: 'core', truncationStrategy: 'keep_first' }),
+  adaptSharedTool(deepSearchMessagesTool, { category: 'core', truncationStrategy: 'keep_first' }),
+  adaptSharedTool(recentMessagesTool, { category: 'core', truncationStrategy: 'keep_last' }),
+  adaptSharedTool(getMessageContextTool, { category: 'core', truncationStrategy: 'keep_last' }),
+  adaptSharedTool(searchSessionsTool, { category: 'core' }),
+  adaptSharedTool(getSessionMessagesTool, { category: 'core', truncationStrategy: 'keep_last' }),
+  adaptSharedTool(getMembersTool, { category: 'core' }),
 
   // ==================== Analysis 工具（按需加载） ====================
-  adaptSharedTool(memberStatsTool, { electronName: 'get_member_stats', category: 'analysis' }),
-  adaptSharedTool(timeStatsTool, { electronName: 'get_time_stats', category: 'analysis' }),
-  adaptSharedTool(getMemberNameHistoryTool, { electronName: 'get_member_name_history', category: 'analysis' }),
-  adaptSharedTool(getConversationBetweenTool, {
-    electronName: 'get_conversation_between',
-    category: 'analysis',
-    truncationStrategy: 'keep_last',
-  }),
-  adaptSharedTool(getSessionSummariesTool, { electronName: 'get_session_summaries', category: 'analysis' }),
-  adaptSharedTool(responseTimeAnalysisTool, { electronName: 'response_time_analysis', category: 'analysis' }),
-  adaptSharedTool(keywordFrequencyTool, { electronName: 'keyword_frequency', category: 'analysis' }),
+  adaptSharedTool(memberStatsTool, { category: 'analysis' }),
+  adaptSharedTool(timeStatsTool, { category: 'analysis' }),
+  adaptSharedTool(getMemberNameHistoryTool, { category: 'analysis' }),
+  adaptSharedTool(getConversationBetweenTool, { category: 'analysis', truncationStrategy: 'keep_last' }),
+  adaptSharedTool(getSessionSummariesTool, { category: 'analysis' }),
+  adaptSharedTool(responseTimeAnalysisTool, { category: 'analysis' }),
+  adaptSharedTool(keywordFrequencyTool, { category: 'analysis' }),
 
   // ==================== SQL 分析工具 ====================
   ...sqlToolEntries,

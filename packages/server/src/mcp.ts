@@ -15,6 +15,8 @@ import { getSessionMeta, getSessionOverview, getDatabaseSchema } from '@openchat
 import { TOOL_REGISTRY, CoreDataProvider } from '@openchatlab/tools'
 import type { SessionListContext } from '@openchatlab/tools/src/definitions/sessions'
 
+const MCP_TOOL_PREFIX = 'chatlab_'
+
 let dbManager: DatabaseManager
 
 function initMcpRuntime() {
@@ -77,10 +79,12 @@ export async function startMcpServer(): Promise<void> {
   // --- 注册 Tools ---
 
   for (const tool of TOOL_REGISTRY) {
-    if (tool.name === 'chatlab_sessions') {
+    const mcpName = `${MCP_TOOL_PREFIX}${tool.name}`
+
+    if (tool.name === 'list_sessions') {
       const zodShape = jsonSchemaToZod(tool.inputSchema.properties, tool.inputSchema.required)
 
-      server.tool(tool.name, tool.description, zodShape, async (params) => {
+      server.tool(mcpName, tool.description, zodShape, async (params) => {
         const context: SessionListContext = {
           db: null as any,
           sessionId: '',
@@ -93,13 +97,13 @@ export async function startMcpServer(): Promise<void> {
       continue
     }
 
-    // 其他工具：注入 session_id 参数
+    const sessionsToolMcpName = `${MCP_TOOL_PREFIX}list_sessions`
     const zodShape = {
-      session_id: z.string().describe('会话 ID（通过 chatlab_sessions 工具获取）'),
+      session_id: z.string().describe(`Session ID (use ${sessionsToolMcpName} to get available sessions)`),
       ...jsonSchemaToZod(tool.inputSchema.properties, tool.inputSchema.required),
     }
 
-    server.tool(tool.name, tool.description, zodShape, async (params) => {
+    server.tool(mcpName, tool.description, zodShape, async (params) => {
       const sessionId = params.session_id as string
       const db = dbManager.open(sessionId)
       if (!db) {

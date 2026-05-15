@@ -50,7 +50,7 @@ async function handler(params: Record<string, unknown>, context: ToolExecutionCo
 }
 
 export const searchTool: ToolDefinition = {
-  name: 'chatlab_search',
+  name: 'search_keyword',
   description: '在聊天记录中搜索关键词，返回匹配的消息列表（发送者、内容、时间）',
   inputSchema,
   handler,
