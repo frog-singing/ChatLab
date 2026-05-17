@@ -89,6 +89,8 @@ export {
   fetchAllRecentMessages,
   fetchRecentTextMessages,
   fetchConversationBetween,
+  filterMessagesWithContext,
+  getMultipleSessionsMessages,
 } from './query'
 
 // 查询类型
@@ -152,6 +154,12 @@ export type {
   AsyncPaginatedMessages,
   AsyncMessagesWithTotal,
   AsyncConversationData,
+  FilterMessage,
+  ContextBlock,
+  FilterStats,
+  PaginationInfo,
+  FilterResultWithPagination,
+  FilterOptions,
 } from './query'
 
 // NLP（平台无关的类型、数据和工具函数）

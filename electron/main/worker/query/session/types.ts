@@ -10,77 +10,14 @@ export type { ChatSessionItem, SessionIndexStats } from '@openchatlab/core'
 // AI tool types — re-exported from core via aiTools.ts
 export type { SessionSearchResultItem, SessionMessagesResult } from './aiTools'
 
-/**
- * 自定义筛选消息类型（完整信息，兼容 MessageList 组件）
- */
-export interface FilterMessage {
-  id: number
-  senderName: string
-  senderPlatformId: string
-  senderAliases: string[]
-  senderAvatar: string | null
-  content: string
-  timestamp: number
-  type: number
-  replyToMessageId: string | null
-  replyToContent: string | null
-  replyToSenderName: string | null
-  /** 是否为命中的消息（关键词匹配） */
-  isHit: boolean
-}
-
-/**
- * 上下文块类型（用于自定义筛选）
- */
-export interface ContextBlock {
-  /** 块的时间范围 */
-  startTs: number
-  endTs: number
-  /** 消息列表 */
-  messages: FilterMessage[]
-  /** 命中的消息数量 */
-  hitCount: number
-}
-
-/**
- * 筛选结果类型
- */
-export interface FilterResult {
-  /** 上下文块列表 */
-  blocks: ContextBlock[]
-  /** 统计信息 */
-  stats: {
-    /** 总消息数 */
-    totalMessages: number
-    /** 命中的消息数 */
-    hitMessages: number
-    /** 总字符数 */
-    totalChars: number
-  }
-}
-
-/**
- * 分页信息类型
- */
-export interface PaginationInfo {
-  /** 当前页码（从 1 开始） */
-  page: number
-  /** 每页块数 */
-  pageSize: number
-  /** 总块数 */
-  totalBlocks: number
-  /** 总命中数 */
-  totalHits: number
-  /** 是否还有更多 */
-  hasMore: boolean
-}
-
-/**
- * 带分页的筛选结果类型
- */
-export interface FilterResultWithPagination extends FilterResult {
-  pagination: PaginationInfo
-}
+// Filter types — re-exported from @openchatlab/core
+export type {
+  FilterMessage,
+  ContextBlock,
+  FilterStats,
+  PaginationInfo,
+  FilterResultWithPagination,
+} from '@openchatlab/core'
 
 /**
  * 导出筛选结果参数

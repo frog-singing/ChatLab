@@ -121,6 +121,17 @@ export {
 } from './message-query-functions'
 export type { AsyncPaginatedMessages, AsyncMessagesWithTotal, AsyncConversationData } from './message-query-functions'
 
+// Filter with context (keyword/sender/time filter + pagination)
+export { filterMessagesWithContext, getMultipleSessionsMessages } from './filter'
+export type {
+  FilterMessage,
+  ContextBlock,
+  FilterStats,
+  PaginationInfo,
+  FilterResultWithPagination,
+  FilterOptions,
+} from './filter'
+
 // Advanced analytics
 export {
   getCatchphraseAnalysis,

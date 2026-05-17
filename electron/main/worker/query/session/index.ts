@@ -11,7 +11,7 @@ export type {
   SessionMessagesResult,
   FilterMessage,
   ContextBlock,
-  FilterResult,
+  FilterStats,
   PaginationInfo,
   FilterResultWithPagination,
   ExportFilterParams,

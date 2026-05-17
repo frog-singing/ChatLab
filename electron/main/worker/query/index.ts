@@ -98,7 +98,7 @@ export type {
   SessionSearchResultItem,
   SessionMessagesResult,
   ContextBlock,
-  FilterResult,
+  FilterStats,
   FilterMessage,
   PaginationInfo,
   FilterResultWithPagination,

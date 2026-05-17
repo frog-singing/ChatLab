@@ -883,63 +883,14 @@ export async function getSessionSummaries(
 
 // ==================== 自定义筛选 API ====================
 
-/**
- * 筛选消息类型（完整信息）
- */
-export interface FilterMessage {
-  id: number
-  senderName: string
-  senderPlatformId: string
-  senderAliases: string[]
-  senderAvatar: string | null
-  content: string
-  timestamp: number
-  type: number
-  replyToMessageId: string | null
-  replyToContent: string | null
-  replyToSenderName: string | null
-  isHit: boolean
-}
-
-/**
- * 上下文块类型
- */
-export interface ContextBlock {
-  startTs: number
-  endTs: number
-  messages: FilterMessage[]
-  hitCount: number
-}
-
-/**
- * 筛选结果类型
- */
-export interface FilterResult {
-  blocks: ContextBlock[]
-  stats: {
-    totalMessages: number
-    hitMessages: number
-    totalChars: number
-  }
-}
-
-/**
- * 分页信息类型
- */
-export interface PaginationInfo {
-  page: number
-  pageSize: number
-  totalBlocks: number
-  totalHits: number
-  hasMore: boolean
-}
-
-/**
- * 带分页的筛选结果类型
- */
-export interface FilterResultWithPagination extends FilterResult {
-  pagination: PaginationInfo
-}
+import type {
+  FilterMessage,
+  ContextBlock,
+  FilterStats,
+  PaginationInfo,
+  FilterResultWithPagination,
+} from '@openchatlab/core'
+export type { FilterMessage, ContextBlock, FilterStats, PaginationInfo, FilterResultWithPagination }
 
 /**
  * 按条件筛选消息并扩充上下文（支持分页）
