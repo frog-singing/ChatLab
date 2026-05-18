@@ -18,6 +18,9 @@ export {
   hasSessionIndex,
   getSessionIndexStats,
   getChatSessionList,
+  getSessionsByTimeRange,
+  getRecentChatSessions,
+  loadSessionMessages,
   getChatSessionSummary,
   saveChatSessionSummary,
   updateSessionGapThreshold,
@@ -26,6 +29,8 @@ export {
   clearSessionIndex,
   generateSessionIndex,
   generateIncrementalSessionIndex,
+  getPrivateChatMemberAvatar,
+  getExportSessionData,
 } from './session-queries'
 export type {
   SessionMeta,
@@ -40,6 +45,7 @@ export type {
   SessionIndexStats,
   SessionPreviewMessage,
   SearchSessionsOptions,
+  ExportSessionData,
 } from './session-queries'
 
 export {
@@ -120,6 +126,7 @@ export {
   fetchMessagesBefore,
   fetchMessagesAfter,
   searchMessagesLikeAsync,
+  searchMessagesWithFtsAsync,
   fetchMessageContext,
   fetchSearchMessageContext,
   fetchAllRecentMessages,
