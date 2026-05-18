@@ -1,29 +1,45 @@
 /**
- * 流式导入：使用 @openchatlab/parser 解析 + importer 写入
+ * Server/CLI streaming import — adapter for @openchatlab/node-runtime StreamingImporter.
  *
- * 支持所有 14+ 格式（QQ/WeChat/Telegram/WhatsApp/LINE/Discord/Instagram 等），
- * 替代原有仅支持 ChatLab JSON/JSONL 的管线。
+ * Replaces the old buffered-in-memory approach with the same high-performance
+ * streaming pipeline used by Electron (batched transactions, deferred indexes,
+ * nickname history, FTS, format fallback).
  */
 
+import * as fs from 'fs'
+import * as path from 'path'
 import type { DatabaseManager } from '@openchatlab/node-runtime'
-import { openBetterSqliteDatabase, writeParseResultToDb, buildFtsIndex } from '@openchatlab/node-runtime'
-import { CHAT_DB_SCHEMA } from '@openchatlab/core'
 import {
-  streamParseFile,
+  streamingImport,
+  openBetterSqliteDatabase,
+  analyzeNewImport as sharedAnalyzeNewImport,
+  analyzeIncrementalImport as sharedAnalyzeIncremental,
+  incrementalImport as sharedIncrementalImport,
+} from '@openchatlab/node-runtime'
+import type {
+  StreamImportResult,
+  StreamImportDeps,
+  ImportProgressCallback,
+  IncrementalImportResult,
+  IncrementalAnalyzeResult,
+  IncrementalImportDeps,
+  ImportOptions,
+  AnalyzeNewImportResult,
+} from '@openchatlab/node-runtime'
+import { CHAT_DB_TABLES } from '@openchatlab/core'
+import {
   detectFormat as parserDetectFormat,
   detectAllFormats,
   getFormatFeatureById,
   getSupportedFormats as parserGetSupportedFormats,
   scanMultiChatFile as parserScanMultiChatFile,
-  type ParsedMeta,
-  type ParsedMember,
-  type ParsedMessage,
-  type ParseProgress,
   type FormatFeature,
   type MultiChatInfo,
+  type ParseProgress,
 } from '@openchatlab/parser'
-import * as fs from 'fs'
 import * as crypto from 'crypto'
+
+// ==================== Legacy progress interface (for SSE routes) ====================
 
 export interface StreamImportProgress {
   stage: 'detecting' | 'parsing' | 'saving' | 'indexing' | 'done' | 'error'
@@ -32,14 +48,6 @@ export interface StreamImportProgress {
   bytesRead?: number
   totalBytes?: number
   messagesProcessed?: number
-}
-
-export interface StreamImportResult {
-  success: boolean
-  sessionId?: string
-  error?: string
-  messageCount?: number
-  memberCount?: number
 }
 
 export interface StreamImportOptions {
@@ -55,118 +63,137 @@ function generateSessionId(): string {
   return `chat_${ts}_${rand}`
 }
 
+function resolveNativeBinding(dbManager: DatabaseManager): string | undefined {
+  return (dbManager as any).nativeBinding
+}
+
+function buildStreamImportDeps(dbManager: DatabaseManager, onProgress?: ImportProgressCallback): StreamImportDeps {
+  const nativeBinding = resolveNativeBinding(dbManager)
+  return {
+    openDatabase(sessionId: string) {
+      const dbPath = dbManager.getDbPath(sessionId)
+      const dir = path.dirname(dbPath)
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      const db = openBetterSqliteDatabase(dbPath, { nativeBinding })
+      db.exec(CHAT_DB_TABLES)
+      return db
+    },
+    deleteDatabase(sessionId: string) {
+      const dbPath = dbManager.getDbPath(sessionId)
+      for (const suffix of ['', '-wal', '-shm']) {
+        try {
+          const p = dbPath + suffix
+          if (fs.existsSync(p)) fs.unlinkSync(p)
+        } catch {
+          /* ignore */
+        }
+      }
+    },
+    onProgress: onProgress ?? (() => {}),
+    generateSessionId,
+  }
+}
+
 /**
- * 流式导入：解析文件并写入数据库
+ * High-performance streaming import: parse a file and write to DB
+ * with batched transactions, deferred indexes, and FTS.
  */
 export async function streamImport(
   dbManager: DatabaseManager,
   filePath: string,
   options?: StreamImportOptions
 ): Promise<StreamImportResult> {
-  const { formatId, chatIndex, nativeBinding, onProgress } = options || {}
-
-  onProgress?.({ stage: 'detecting', progress: 5, message: '' })
-
-  let meta: ParsedMeta | null = null
-  const members: ParsedMember[] = []
-  const messages: ParsedMessage[] = []
+  const { formatId, chatIndex, onProgress } = options || {}
 
   const formatOptions: Record<string, unknown> = {}
+  if (formatId) formatOptions.formatId = formatId
   if (chatIndex !== undefined) formatOptions.chatIndex = chatIndex
 
-  try {
-    await streamParseFile(
-      filePath,
-      {
-        onProgress: (p: ParseProgress) => {
-          onProgress?.({
-            stage: 'parsing',
-            progress: Math.min(Math.round(p.percentage * 0.7), 70),
-            message: '',
-            bytesRead: p.bytesRead,
-            totalBytes: p.totalBytes,
-            messagesProcessed: p.messagesProcessed,
-          })
-        },
-        onMeta: (m) => {
-          meta = m
-        },
-        onMembers: (m) => {
-          members.push(...m)
-        },
-        onMessageBatch: (m) => {
-          messages.push(...m)
-        },
-        formatOptions,
-      },
-      formatId
-    )
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    onProgress?.({ stage: 'error', progress: 0, message: msg })
-    return { success: false, error: msg }
-  }
+  const progressAdapter: ImportProgressCallback = onProgress
+    ? (progress) => {
+        let stage: StreamImportProgress['stage'] = 'parsing'
+        let pct = 0
+        switch (progress.stage) {
+          case 'detecting':
+            stage = 'detecting'
+            pct = 5
+            break
+          case 'parsing':
+            stage = 'parsing'
+            pct = Math.min(Math.round(progress.percentage * 0.7), 70)
+            break
+          case 'importing':
+          case 'saving':
+            stage = 'saving'
+            pct = 80
+            break
+          case 'done':
+            stage = 'done'
+            pct = 100
+            break
+          case 'error':
+            stage = 'error'
+            pct = 0
+            break
+        }
+        onProgress({
+          stage,
+          progress: pct,
+          message: progress.message || '',
+          bytesRead: progress.bytesRead,
+          totalBytes: progress.totalBytes,
+          messagesProcessed: progress.messagesProcessed,
+        })
+      }
+    : () => {}
 
-  if (!meta) {
-    const msg = 'Parse failed: no meta information received'
-    onProgress?.({ stage: 'error', progress: 0, message: msg })
-    return { success: false, error: msg }
-  }
+  const deps = buildStreamImportDeps(dbManager, progressAdapter)
+  return streamingImport(filePath, deps, formatOptions)
+}
 
-  const parsedMeta = meta as ParsedMeta
+// ==================== Incremental import ====================
 
-  onProgress?.({ stage: 'saving', progress: 75, message: '' })
-
-  const sessionId = generateSessionId()
-  const dbPath = dbManager.getDbPath(sessionId)
-
-  let db: ReturnType<typeof openBetterSqliteDatabase> | null = null
-  try {
-    db = openBetterSqliteDatabase(dbPath, { nativeBinding })
-    db.exec(CHAT_DB_SCHEMA)
-
-    onProgress?.({ stage: 'saving', progress: 80, message: '' })
-    const stats = writeParseResultToDb(db, parsedMeta, members, messages)
-
-    onProgress?.({ stage: 'indexing', progress: 92, message: '' })
-    buildFtsIndex(db)
-
-    db.close()
-
-    onProgress?.({ stage: 'done', progress: 100, message: '' })
-
-    return {
-      success: true,
-      sessionId,
-      messageCount: stats.messageCount,
-      memberCount: stats.memberCount,
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    try {
-      db?.close()
-    } catch {
-      /* ignore */
-    }
-    try {
-      fs.unlinkSync(dbPath)
-    } catch {
-      /* ignore */
-    }
-    try {
-      fs.unlinkSync(dbPath + '-wal')
-    } catch {
-      /* ignore */
-    }
-    try {
-      fs.unlinkSync(dbPath + '-shm')
-    } catch {
-      /* ignore */
-    }
-    onProgress?.({ stage: 'error', progress: 0, message: msg })
-    return { success: false, error: msg }
+function buildIncrementalDeps(dbManager: DatabaseManager, onProgress?: ImportProgressCallback): IncrementalImportDeps {
+  const nativeBinding = resolveNativeBinding(dbManager)
+  return {
+    openDatabase(sessionId: string, readonly?: boolean) {
+      const dbPath = dbManager.getDbPath(sessionId)
+      if (!fs.existsSync(dbPath)) {
+        throw new Error(`Session database not found: ${sessionId}`)
+      }
+      return openBetterSqliteDatabase(dbPath, { readonly: readonly ?? false, nativeBinding })
+    },
+    onProgress: onProgress ?? (() => {}),
   }
 }
+
+export async function incrementalImport(
+  dbManager: DatabaseManager,
+  sessionId: string,
+  filePath: string,
+  options?: ImportOptions & { onProgress?: ImportProgressCallback }
+): Promise<IncrementalImportResult> {
+  const { onProgress, ...importOpts } = options || {}
+  return sharedIncrementalImport(sessionId, filePath, buildIncrementalDeps(dbManager, onProgress), importOpts)
+}
+
+export async function analyzeIncrementalImport(
+  dbManager: DatabaseManager,
+  sessionId: string,
+  filePath: string,
+  onProgress?: ImportProgressCallback
+): Promise<IncrementalAnalyzeResult> {
+  return sharedAnalyzeIncremental(sessionId, filePath, buildIncrementalDeps(dbManager, onProgress))
+}
+
+export async function analyzeNewImport(
+  filePath: string,
+  onProgress?: ImportProgressCallback
+): Promise<AnalyzeNewImportResult> {
+  return sharedAnalyzeNewImport(filePath, onProgress ?? (() => {}))
+}
+
+// ==================== Re-exports from parser ====================
 
 export {
   parserDetectFormat as detectFormat,
@@ -176,3 +203,10 @@ export {
   parserScanMultiChatFile as scanMultiChatFile,
 }
 export type { FormatFeature, MultiChatInfo, ParseProgress }
+export type {
+  StreamImportResult,
+  IncrementalImportResult,
+  IncrementalAnalyzeResult,
+  AnalyzeNewImportResult,
+  ImportOptions,
+}

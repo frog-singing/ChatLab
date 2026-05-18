@@ -53,7 +53,16 @@ import {
   getChatSessionList,
   getSessionMessages,
 } from '@openchatlab/core'
-import { streamImport, detectFormat, detectAllFormats, getSupportedFormats, scanMultiChatFile } from '../../import'
+import {
+  streamImport,
+  incrementalImport,
+  analyzeIncrementalImport,
+  analyzeNewImport,
+  detectFormat,
+  detectAllFormats,
+  getSupportedFormats,
+  scanMultiChatFile,
+} from '../../import'
 import { getDefaultAssistantConfig, buildPiModel } from '../../ai/llm-config'
 
 function resolveNativeBinding(): string | undefined {
@@ -795,8 +804,8 @@ export function registerWebRoutes(server: FastifyInstance, dbManager: DatabaseMa
         sendEvent('done', {
           success: true,
           sessionId: result.sessionId,
-          messageCount: result.messageCount,
-          memberCount: result.memberCount,
+          messageCount: result.diagnostics?.messagesWritten ?? 0,
+          memberCount: 0,
         })
       } else {
         sendEvent('error', { success: false, error: result.error })
@@ -805,6 +814,128 @@ export function registerWebRoutes(server: FastifyInstance, dbManager: DatabaseMa
       sendEvent('error', { success: false, error: err instanceof Error ? err.message : String(err) })
     } finally {
       reply.raw.end()
+      try {
+        fs.unlinkSync(tmpPath)
+      } catch {
+        /* ignore */
+      }
+      try {
+        fs.rmdirSync(tmpDir)
+      } catch {
+        /* ignore */
+      }
+    }
+  })
+
+  // ==================== Incremental Import ====================
+
+  server.post<{ Params: { id: string } }>('/_web/sessions/:id/import/incremental', async (request, reply) => {
+    const sessionId = request.params.id
+    const data = await (request as any).file()
+    if (!data) return reply.code(400).send({ error: 'No file uploaded' })
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatlab-inc-'))
+    const tmpPath = path.join(tmpDir, data.filename || 'upload')
+
+    const chunks: Buffer[] = []
+    for await (const chunk of data.file) {
+      chunks.push(chunk)
+    }
+    fs.writeFileSync(tmpPath, Buffer.concat(chunks))
+
+    reply.raw.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    })
+
+    function sendEvent(event: string, eventData: unknown) {
+      reply.raw.write(`event: ${event}\ndata: ${JSON.stringify(eventData)}\n\n`)
+    }
+
+    try {
+      const result = await incrementalImport(dbManager, sessionId, tmpPath, {
+        onProgress: (p) => {
+          sendEvent('progress', p)
+        },
+      })
+
+      if (result.success) {
+        sendEvent('done', result)
+      } else {
+        sendEvent('error', { success: false, error: result.error })
+      }
+    } catch (err) {
+      sendEvent('error', { success: false, error: err instanceof Error ? err.message : String(err) })
+    } finally {
+      reply.raw.end()
+      try {
+        fs.unlinkSync(tmpPath)
+      } catch {
+        /* ignore */
+      }
+      try {
+        fs.rmdirSync(tmpDir)
+      } catch {
+        /* ignore */
+      }
+    }
+  })
+
+  server.post<{ Params: { id: string } }>('/_web/sessions/:id/import/incremental/analyze', async (request, reply) => {
+    const sessionId = request.params.id
+    const data = await (request as any).file()
+    if (!data) return reply.code(400).send({ error: 'No file uploaded' })
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatlab-analyze-'))
+    const tmpPath = path.join(tmpDir, data.filename || 'upload')
+
+    const chunks: Buffer[] = []
+    for await (const chunk of data.file) {
+      chunks.push(chunk)
+    }
+    fs.writeFileSync(tmpPath, Buffer.concat(chunks))
+
+    try {
+      const result = await analyzeIncrementalImport(dbManager, sessionId, tmpPath)
+      return result
+    } catch (err) {
+      return reply.code(500).send({ error: err instanceof Error ? err.message : String(err) })
+    } finally {
+      try {
+        fs.unlinkSync(tmpPath)
+      } catch {
+        /* ignore */
+      }
+      try {
+        fs.rmdirSync(tmpDir)
+      } catch {
+        /* ignore */
+      }
+    }
+  })
+
+  // ==================== Analyze New Import (dry-run) ====================
+
+  server.post('/_web/import/analyze', async (request, reply) => {
+    const data = await (request as any).file()
+    if (!data) return reply.code(400).send({ error: 'No file uploaded' })
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chatlab-analyze-'))
+    const tmpPath = path.join(tmpDir, data.filename || 'upload')
+
+    const chunks: Buffer[] = []
+    for await (const chunk of data.file) {
+      chunks.push(chunk)
+    }
+    fs.writeFileSync(tmpPath, Buffer.concat(chunks))
+
+    try {
+      const result = await analyzeNewImport(tmpPath)
+      return result
+    } catch (err) {
+      return reply.code(500).send({ error: err instanceof Error ? err.message : String(err) })
+    } finally {
       try {
         fs.unlinkSync(tmpPath)
       } catch {

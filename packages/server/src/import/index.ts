@@ -4,9 +4,12 @@ export type { ParsedData, ImportMeta, ImportMember, ImportMessage, ProgressCallb
 export { importData } from './importer'
 export type { ImportResult, ImportOptions } from './importer'
 
-// New: full-format stream import via @openchatlab/parser
+// Full-format stream import via @openchatlab/parser + node-runtime streaming importer
 export {
   streamImport,
+  incrementalImport,
+  analyzeIncrementalImport,
+  analyzeNewImport,
   detectFormat,
   detectAllFormats,
   getFormatFeatureById,
@@ -19,4 +22,7 @@ export type {
   StreamImportOptions,
   FormatFeature,
   MultiChatInfo,
+  IncrementalImportResult,
+  IncrementalAnalyzeResult,
+  AnalyzeNewImportResult,
 } from './stream-import'

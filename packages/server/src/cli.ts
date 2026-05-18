@@ -243,10 +243,10 @@ program
       })
 
       if (result.success) {
-        console.log(`\n\n导入成功!`)
-        console.log(`  会话 ID: ${result.sessionId}`)
-        console.log(`  写入消息: ${result.messageCount}`)
-        console.log(`  成员数: ${result.memberCount}`)
+        console.log(`\n\nImport succeeded!`)
+        console.log(`  Session ID: ${result.sessionId}`)
+        console.log(`  Messages written: ${result.diagnostics?.messagesWritten ?? 0}`)
+        console.log(`  Messages skipped: ${result.diagnostics?.messagesSkipped ?? 0}`)
       } else {
         console.error(`\n\n导入失败: ${result.error}`)
         process.exit(1)
